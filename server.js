@@ -1,24 +1,45 @@
-require("dotenv").config();
-require("./DB/database.js").connect();
-const express = require('express');
-const router = require("./routes/expense.js");
-const app = express()
+import express from "express";
+import cors from "cors";
+import "./loadEnviroment.mjs";
+import mongoose from "mongoose";
+import 'dotenv/config' 
+import bodyParser from "body-parser";
+import Expense from "./DB/module.js"
+
 const PORT = process.env.PORT || 4000
+const app = express();
 
-app.use(express.json())
-
-app.use("/api", router);
+app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.json());
 
 app.use(cors());
+app.use(express.json())
 
+const dbConnection = async () => {
+  await mongoose.connect(process.env.ATLAS_URI)
+ 
+  console.log(`Connected to Database successfully!`)
+}
 
-app.use("/expense", expenses)
+dbConnection();
 
-app.get("/", (req, res) => {
-    res.send({ message: "Hello, nodemon, learning with educative!" });
-  });
+app.post("/api/create", (req,res) => {
+  const expense = new Expense (
+    {
+      description: req.body.description,
+      amount: req.body.amount,
+      category: req.body.category
+    }
+  )
+  expense.save()
+  .then((result) => {
+    res.status(200).send ({
+      result,
+    })
+  })
+})
+
 
 app.listen(PORT, () => {
-    console.log('database connnected')
     console.log(`Server is running on port : ${PORT}`)
 })
